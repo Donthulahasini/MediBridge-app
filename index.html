@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediBridge | Smart Health Record - One Health Record, Anywhere, Anytime</title>
+  <meta name="description" content="MediBridge Smart Health Record platform. Centralized medical records, emergency response, ICU bed availability, and AI triage.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN for Health Metric Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- QRCode.js CDN for Emergency QR Code Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark">
+  <!-- Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-logo" onclick="switchRole('landing')">
+        <img src="logo.jpg" alt="MediBridge Logo" class="header-logo-img" id="headerLogoImg">
+        <div class="brand-text">
+          <span class="brand-name">MEDI<span class="highlight">BRIDGE</span></span>
+          <span class="brand-sub" id="hdrSubTagline">Smart Health Record</span>
+        </div>
+      </div>
+
+      <!-- Quick Nav Links -->
+      <nav class="nav-links">
+        <button class="nav-btn active" id="navHome" onclick="switchRole('landing')"><i class="fa-solid fa-house"></i> <span data-i18n="navHome">Home</span></button>
+        <button class="nav-btn" id="navBedPlatform" onclick="showBedPlatformModal()"><i class="fa-solid fa-hospital"></i> <span data-i18n="navBeds">Bed & ICU Matrix</span></button>
+        <button class="nav-btn" id="navEmergency" onclick="openAIEmergencyModal()"><i class="fa-solid fa-truck-medical text-pulse"></i> <span data-i18n="navEmergency">AI Emergency Triage</span></button>
+        <button class="nav-btn" id="navAbout" onclick="scrollToSection('aboutSection')"><i class="fa-solid fa-circle-info"></i> <span data-i18n="navAbout">About</span></button>
+        <button class="nav-btn" id="navContact" onclick="scrollToSection('contactSection')"><i class="fa-solid fa-phone"></i> <span data-i18n="navContact">Contact</span></button>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="header-actions">
+        <!-- Language Switcher -->
+        <div class="lang-selector">
+          <i class="fa-solid fa-globe lang-icon"></i>
+          <select id="langSelect" onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="hi">हिंदी (Hindi)</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+
+        <!-- Notification Bell -->
+        <div class="notification-wrapper">
+          <button class="icon-btn" onclick="toggleNotifications()" id="notifBell">
+            <i class="fa-solid fa-bell"></i>
+            <span class="badge" id="notifBadge">4</span>
+          </button>
+          <!-- Notification Dropdown -->
+          <div class="notification-dropdown hidden" id="notifDropdown">
+            <div class="notif-header">
+              <h4 data-i18n="notifTitle">Notifications</h4>
+              <button class="text-btn" onclick="markAllNotificationsRead()" data-i18n="markRead">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notifList">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Role Indicator / Portal Switcher -->
+        <div class="portal-selector-dropdown">
+          <button class="portal-btn" onclick="toggleRoleMenu()" id="currentRoleBtn">
+            <i class="fa-solid fa-user-gear"></i> <span id="currentRoleLabel">Patient View</span> <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <div class="portal-menu hidden" id="portalMenu">
+            <div class="portal-menu-header" data-i18n="switchPortal">Switch Dashboard</div>
+            <button onclick="switchRole('patient')" class="portal-item"><i class="fa-solid fa-user-injured text-purple"></i> <span data-i18n="patientPortal">Patient Portal</span></button>
+            <button onclick="switchRole('doctor')" class="portal-item"><i class="fa-solid fa-user-doctor text-blue"></i> <span data-i18n="doctorPortal">Doctor Portal</span></button>
+            <button onclick="switchRole('hospital')" class="portal-item"><i class="fa-solid fa-hospital-user text-emerald"></i> <span data-i18n="hospitalPortal">Hospital / Lab Portal</span></button>
+            <hr>
+            <button onclick="openSettingsModal()" class="portal-item"><i class="fa-solid fa-gear"></i> <span data-i18n="settings">Settings</span></button>
+          </div>
+        </div>
+
+        <!-- Quick Emergency SOS Button -->
+        <button class="sos-btn" onclick="openAIEmergencyModal()">
+          <i class="fa-solid fa-circle-exclamation"></i> <span data-i18n="sosBtn">SOS Emergency</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main id="appMain" class="app-main">
+
+    <!-- LANDING PAGE VIEW -->
+    <section id="landingView" class="view-section">
+      <!-- Hero Banner -->
+      <div class="hero-container">
+        <div class="hero-content">
+          <div class="badge-pill">
+            <span class="pulse-dot"></span>
+            <span data-i18n="heroBadge">Next-Gen Universal Health Ecosystem</span>
+          </div>
+          <h1 class="hero-title">
+            <span class="highlight-purple">One Health Record,</span><br>
+            <span class="glow-text">Anywhere, Anytime.</span>
+          </h1>
+          <p class="hero-description" data-i18n="heroDesc">
+            MediBridge seamlessly unifies your medical history, prescriptions, diagnostic lab reports, live ICU bed availability, and instant AI emergency triage into one secure digital pulse pass.
+          </p>
+
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg" onclick="switchRole('patient')">
+              <i class="fa-solid fa-rocket"></i> <span data-i18n="getStarted">Get Started</span>
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="openAIEmergencyModal()">
+              <i class="fa-solid fa-shield-heart text-pulse"></i> <span data-i18n="tryEmergencyAI">Try AI Emergency Triage</span>
+            </button>
+            <button class="btn btn-outline btn-lg" onclick="showBedPlatformModal()">
+              <i class="fa-solid fa-bed-pulse"></i> <span data-i18n="liveBedStatus">Live Bed Availability</span>
+            </button>
+          </div>
+
+          <!-- Feature Quick Stats -->
+          <div class="hero-stats">
+            <div class="stat-card">
+              <span class="stat-val">100%</span>
+              <span class="stat-lbl" data-i18n="statEncrypted">Encrypted Access</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-val">040-1463381</span>
+              <span class="stat-lbl" data-i18n="statSupport">24/7 Helpline</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-val">&lt; 3 Sec</span>
+              <span class="stat-lbl" data-i18n="statQrAccess">Emergency QR Access</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-media">
+          <div class="logo-hero-card">
+            <img src="logo.jpg" alt="MediBridge Official Logo" class="hero-logo-img">
+            <div class="hero-logo-badge">
+              <i class="fa-solid fa-heart-pulse icon-pulse"></i>
+              <div>
+                <strong>Smart Vital Monitoring</strong>
+                <p>SYS 119 | DIA 79 | PUL 65</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Role Selection Portal Cards -->
+      <div class="portal-cards-section">
+        <div class="section-title text-center">
+          <h2 data-i18n="selectRoleTitle">Select Access Portal</h2>
+          <p data-i18n="selectRoleSub">Choose your profile type to launch your dedicated dashboard</p>
+        </div>
+
+        <div class="portal-grid">
+          <!-- Patient Login Card -->
+          <div class="portal-card glass-card" onclick="switchRole('patient')">
+            <div class="portal-icon bg-purple">
+              <i class="fa-solid fa-user-injured"></i>
+            </div>
+            <h3 data-i18n="patientLoginTitle">Patient Portal</h3>
+            <p data-i18n="patientLoginDesc">Manage your health timeline, prescriptions, lab reports, dosage reminders, and emergency QR pass.</p>
+            <button class="btn btn-purple btn-full mt-auto">
+              <span data-i18n="loginAsPatient">Login as Patient</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- Doctor Login Card -->
+          <div class="portal-card glass-card" onclick="switchRole('doctor')">
+            <div class="portal-icon bg-blue">
+              <i class="fa-solid fa-user-doctor"></i>
+            </div>
+            <h3 data-i18n="doctorLoginTitle">Doctor Portal</h3>
+            <p data-i18n="doctorLoginDesc">Search patients by Health ID, request record access, prescribe treatments, and log clinical notes.</p>
+            <button class="btn btn-blue btn-full mt-auto">
+              <span data-i18n="loginAsDoctor">Login as Doctor</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- Hospital / Lab Login Card -->
+          <div class="portal-card glass-card" onclick="switchRole('hospital')">
+            <div class="portal-icon bg-emerald">
+              <i class="fa-solid fa-hospital-user"></i>
+            </div>
+            <h3 data-i18n="hospitalLoginTitle">Hospital & Lab Portal</h3>
+            <p data-i18n="hospitalLoginDesc">Upload discharge summaries, diagnostic reports, and manage real-time ICU/Ward bed availability.</p>
+            <button class="btn btn-emerald btn-full mt-auto">
+              <span data-i18n="loginAsHospital">Login as Hospital / Lab</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- About MediBridge Section -->
+      <div id="aboutSection" class="about-section glass-section">
+        <div class="about-grid">
+          <div class="about-text">
+            <span class="subtitle-tag" data-i18n="aboutTag">ABOUT MEDIBRIDGE</span>
+            <h2 data-i18n="aboutTitle">Connecting Patients, Doctors & Hospitals Seamlessly</h2>
+            <p data-i18n="aboutP1">
+              MediBridge is a state-of-the-art smart health record infrastructure built to bridge the gap between emergency care, everyday diagnostic records, and hospital bed management.
+            </p>
+            <p data-i18n="aboutP2">
+              With our centralized architecture, patients never have to worry about missing physical files again. In critical situations, first responders can scan your Emergency QR Code to immediately view life-saving data including Blood Group, Severe Allergies, and Emergency Contacts.
+            </p>
+
+            <div class="key-features-list">
+              <div class="feature-item">
+                <i class="fa-solid fa-circle-check text-purple"></i>
+                <div>
+                  <strong data-i18n="feat1Title">Unified Health Timeline</strong>
+                  <p data-i18n="feat1Desc">Chronological archiving of blood tests, prescriptions, and imaging reports from 2024 to 2026.</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <i class="fa-solid fa-circle-check text-purple"></i>
+                <div>
+                  <strong data-i18n="feat2Title">Smart Emergency Triage</strong>
+                  <p data-i18n="feat2Desc">AI decision engine that analyzes vitals drops and dispatches immediate ambulance alerts.</p>
+                </div>
+              </div>
+              <div class="feature-item">
+                <i class="fa-solid fa-circle-check text-purple"></i>
+                <div>
+                  <strong data-i18n="feat3Title">Live ICU Bed Matrix</strong>
+                  <p data-i18n="feat3Desc">Real-time availability of Ventilator, Oxygen, and General Ward beds across regional hospitals.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-card-preview">
+            <div class="preview-box">
+              <img src="logo.jpg" alt="MediBridge Logo Large" class="about-logo-large">
+              <div class="pulse-wave-graphic">
+                <div class="wave-line"></div>
+              </div>
+              <div class="preview-badge">
+                <i class="fa-solid fa-shield-halved"></i> HIPAA & ISO 27001 Certified Health Protocol
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Section -->
+      <div id="contactSection" class="contact-section glass-section">
+        <div class="contact-header text-center">
+          <span class="subtitle-tag" data-i18n="contactTag">24/7 SUPPORT & HELP</span>
+          <h2 data-i18n="contactTitle">Get in Touch with MediBridge</h2>
+          <p data-i18n="contactSub">Have questions, need hospital onboard support, or urgent assistance?</p>
+        </div>
+
+        <div class="contact-grid">
+          <div class="contact-info-card">
+            <div class="contact-method">
+              <div class="contact-icon bg-purple">
+                <i class="fa-solid fa-phone"></i>
+              </div>
+              <div>
+                <small data-i18n="supportHelpline">Official Helpline Phone</small>
+                <h3>040-1463381</h3>
+                <p data-i18n="phoneAvail">Available 24 hours / 7 days a week</p>
+              </div>
+            </div>
+
+            <div class="contact-method">
+              <div class="contact-icon bg-blue">
+                <i class="fa-solid fa-truck-medical"></i>
+              </div>
+              <div>
+                <small data-i18n="emergencyHotline">Emergency Hotline</small>
+                <h3 class="text-pulse">108 / 112 (Direct Dispatch)</h3>
+                <p data-i18n="hotlineDesc">AI Smart Response Auto Trigger Active</p>
+              </div>
+            </div>
+
+            <div class="contact-method">
+              <div class="contact-icon bg-emerald">
+                <i class="fa-solid fa-envelope"></i>
+              </div>
+              <div>
+                <small data-i18n="emailUs">Email Support</small>
+                <h3>support@medibridge.org</h3>
+                <p>Response within 15 minutes</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Contact Form -->
+          <form class="contact-form glass-card" onsubmit="handleContactSubmit(event)">
+            <h3 data-i18n="sendMessage">Send Us a Message</h3>
+            <div class="form-group">
+              <label data-i18n="yourName">Your Full Name</label>
+              <input type="text" class="form-control" placeholder="e.g. Rahul Sharma" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="phone">Phone Number</label>
+                <input type="tel" class="form-control" placeholder="040-1463381" required>
+              </div>
+              <div class="form-group">
+                <label data-i18n="category">Category</label>
+                <select class="form-control">
+                  <option>Patient Inquiry</option>
+                  <option>Doctor Access Request</option>
+                  <option>Hospital Bed Integration</option>
+                  <option>Technical Support</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="message">Message</label>
+              <textarea class="form-control" rows="4" placeholder="How can we assist you with your health records?" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-purple btn-full">
+              <i class="fa-solid fa-paper-plane"></i> <span data-i18n="sendBtn">Submit Inquiry</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- PATIENT DASHBOARD VIEW -->
+    <section id="patientView" class="view-section hidden">
+      <!-- Patient Banner / Header -->
+      <div class="patient-profile-card glass-card">
+        <div class="profile-main">
+          <div class="avatar-circle">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="profile-details">
+            <div class="profile-header-top">
+              <h2 id="pName">Rahul Sharma</h2>
+              <span class="health-id-badge" id="pHealthId">Health ID: MB-9482-1049</span>
+              <span class="status-pill status-verified"><i class="fa-solid fa-shield-check"></i> Verified Record</span>
+            </div>
+            <div class="profile-tags">
+              <span><i class="fa-solid fa-cake-candles"></i> <strong>Age:</strong> <span id="pAge">34 Yrs</span></span>
+              <span><i class="fa-solid fa-droplet text-red"></i> <strong>Blood Group:</strong> <span id="pBlood">O+ (Positive)</span></span>
+              <span><i class="fa-solid fa-circle-exclamation text-amber"></i> <strong>Allergies:</strong> <span id="pAllergies">Penicillin, Peanuts</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn btn-purple" onclick="openEmergencyQRModal()">
+            <i class="fa-solid fa-qrcode"></i> <span data-i18n="emergencyQR">Emergency QR Pass</span>
+          </button>
+          <button class="btn btn-secondary" onclick="openShareRecordModal()">
+            <i class="fa-solid fa-share-nodes"></i> <span data-i18n="shareRecords">Share Records with Doctor</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="dashboard-grid">
+
+        <!-- Left Column: Vitals Graphs & Health Timeline -->
+        <div class="dash-col-left">
+
+          <!-- Health Graphs Box (BP, Sugar, Weight) -->
+          <div class="glass-card dash-card">
+            <div class="card-header">
+              <div>
+                <h3 data-i18n="vitalsTitle"><i class="fa-solid fa-chart-line text-purple"></i> Health Vitals & Trends</h3>
+                <small data-i18n="vitalsSub">Real-time parameters (BP, Sugar, Weight)</small>
+              </div>
+              <div class="graph-tab-buttons">
+                <button class="tab-btn active" onclick="switchGraphTab('bp')">Blood Pressure</button>
+                <button class="tab-btn" onclick="switchGraphTab('sugar')">Blood Sugar</button>
+                <button class="tab-btn" onclick="switchGraphTab('weight')">Weight</button>
+              </div>
+            </div>
+
+            <div class="chart-container-box">
+              <canvas id="healthVitalsChart"></canvas>
+            </div>
+
+            <!-- Current Vital Cards -->
+            <div class="vitals-summary-row">
+              <div class="vital-mini-card">
+                <div class="vital-icon bg-purple"><i class="fa-solid fa-heart-pulse"></i></div>
+                <div>
+                  <small>Blood Pressure</small>
+                  <h4>119/79 <span class="unit">mmHg</span></h4>
+                  <span class="badge-small bg-green">Optimal</span>
+                </div>
+              </div>
+
+              <div class="vital-mini-card">
+                <div class="vital-icon bg-blue"><i class="fa-solid fa-cubes-stacked"></i></div>
+                <div>
+                  <small>Fasting Sugar</small>
+                  <h4>98 <span class="unit">mg/dL</span></h4>
+                  <span class="badge-small bg-green">Normal</span>
+                </div>
+              </div>
+
+              <div class="vital-mini-card">
+                <div class="vital-icon bg-emerald"><i class="fa-solid fa-weight-scale"></i></div>
+                <div>
+                  <small>Body Weight</small>
+                  <h4>72.5 <span class="unit">kg</span></h4>
+                  <span class="badge-small bg-blue">BMI 23.4</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medical History & Health Timeline -->
+          <div class="glass-card dash-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-timeline text-purple"></i> Health Timeline & History</h3>
+              <button class="btn btn-sm btn-outline" onclick="openAddHistoryModal()"><i class="fa-solid fa-plus"></i> Add Entry</button>
+            </div>
+
+            <div class="timeline-container" id="patientTimeline">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Prescriptions & Lab Reports -->
+          <div class="glass-card dash-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-file-medical text-purple"></i> Prescriptions & Diagnostic Reports</h3>
+              <span class="count-badge" id="reportCount">3 Files</span>
+            </div>
+
+            <div class="reports-list" id="patientReportsList">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Medicine Reminders, Appointments & Doctor Sharing -->
+        <div class="dash-col-right">
+
+          <!-- Medicine Reminders with Dosage -->
+          <div class="glass-card dash-card">
+            <div class="card-header">
+              <div>
+                <h3><i class="fa-solid fa-pills text-purple"></i> Medicine Reminders</h3>
+                <small>Today's Dosage Schedule</small>
+              </div>
+              <button class="icon-btn-sm" onclick="openAddMedicineModal()"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <div class="medicine-schedule-list" id="medRemindersList">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Upcoming Appointments -->
+          <div class="glass-card dash-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-calendar-check text-purple"></i> Upcoming Appointments</h3>
+              <button class="btn btn-sm btn-purple" onclick="openBookAppointmentModal()"><i class="fa-solid fa-calendar-plus"></i> Book</button>
+            </div>
+
+            <div class="appointments-list" id="appointmentsList">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Doctor Access Requests & Granted Permissions -->
+          <div class="glass-card dash-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-user-lock text-purple"></i> Doctor Access & Permissions</h3>
+            </div>
+
+            <div id="doctorAccessList">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- DOCTOR DASHBOARD VIEW -->
+    <section id="doctorView" class="view-section hidden">
+      <!-- Doctor Profile Bar -->
+      <div class="doctor-profile-card glass-card">
+        <div class="doc-avatar bg-blue">
+          <i class="fa-solid fa-user-doctor"></i>
+        </div>
+        <div class="doc-info">
+          <h2>Dr. Ananya Rao, MD</h2>
+          <p><i class="fa-solid fa-stethoscope"></i> Senior Consultant Cardiologist | Reg No: AP-MC-84920</p>
+        </div>
+        <div class="doc-hospital">
+          <span class="hospital-tag"><i class="fa-solid fa-hospital"></i> City Heart Care Institute</span>
+        </div>
+      </div>
+
+      <!-- Patient Health ID Search Box -->
+      <div class="patient-search-card glass-card">
+        <h3><i class="fa-solid fa-magnifying-glass text-blue"></i> Search Patient Record</h3>
+        <p>Enter patient's unique Universal Health ID to request access or view authorized history</p>
+
+        <div class="search-input-group">
+          <div class="input-with-icon">
+            <i class="fa-solid fa-id-card"></i>
+            <input type="text" id="searchHealthId" class="form-control" placeholder="e.g. MB-9482-1049" value="MB-9482-1049">
+          </div>
+          <button class="btn btn-blue" onclick="searchPatientByHealthId()">
+            <i class="fa-solid fa-search"></i> Search Patient
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient Search Result / Record Details -->
+      <div id="doctorPatientResult" class="doctor-patient-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- HOSPITAL & LAB DASHBOARD VIEW -->
+    <section id="hospitalView" class="view-section hidden">
+      <!-- Hospital Header Bar -->
+      <div class="hospital-profile-card glass-card">
+        <div class="hosp-avatar bg-emerald">
+          <i class="fa-solid fa-hospital"></i>
+        </div>
+        <div class="hosp-info">
+          <h2>City Central General Hospital & Diagnostic Lab</h2>
+          <p><i class="fa-solid fa-location-dot"></i> Road No. 12, Banjara Hills, Hyderabad | Phone: 040-1463381</p>
+        </div>
+        <button class="btn btn-emerald" onclick="showBedPlatformModal()">
+          <i class="fa-solid fa-bed"></i> Manage Live Beds & ICU
+        </button>
+      </div>
+
+      <!-- Hospital Actions Tab Grid -->
+      <div class="hospital-grid">
+        <!-- Upload Discharge Summary & Patient Record -->
+        <div class="glass-card dash-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-file-arrow-up text-emerald"></i> Upload Patient Discharge Summary & Reports</h3>
+          </div>
+
+          <form onsubmit="handleHospitalUploadSubmit(event)" class="upload-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Patient Health ID</label>
+                <input type="text" id="uploadHealthId" class="form-control" placeholder="e.g. MB-9482-1049" value="MB-9482-1049" required>
+              </div>
+              <div class="form-group">
+                <label>Document Category</label>
+                <select id="uploadCategory" class="form-control">
+                  <option value="Discharge Summary">Discharge Summary</option>
+                  <option value="Lab Report">Diagnostic Lab Report (Blood/Urinary)</option>
+                  <option value="Radiology Scan">Radiology MRI / CT Scan</option>
+                  <option value="Operative Notes">Surgical / Operative Notes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Admission Date</label>
+                <input type="date" id="uploadAdmDate" class="form-control" value="2026-07-25">
+              </div>
+              <div class="form-group">
+                <label>Discharge Date</label>
+                <input type="date" id="uploadDisDate" class="form-control" value="2026-07-28">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Primary Diagnosis & Clinical Summary</label>
+              <textarea id="uploadSummary" class="form-control" rows="3" placeholder="Specify primary diagnosis, procedures performed, and recovery state..." required>Acute Gastritis with Mild Dehydration. Managed with IV fluids and PPI therapy. Stable upon discharge.</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Attach PDF / Image File</label>
+              <div class="file-drop-area">
+                <i class="fa-solid fa-cloud-arrow-up file-icon text-emerald"></i>
+                <span>Drag & drop report PDF or <strong>Browse File</strong></span>
+                <input type="file" id="uploadFileInput" accept=".pdf,.png,.jpg">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-emerald btn-lg btn-full">
+              <i class="fa-solid fa-paper-plane"></i> Upload & Sync to Patient Record
+            </button>
+          </form>
+        </div>
+
+        <!-- Recent Upload History -->
+        <div class="glass-card dash-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-clock-rotate-left text-emerald"></i> Recent Upload History</h3>
+            <span class="count-badge" id="uploadCountBadge">3 Records</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Patient ID</th>
+                  <th>Document Type</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="hospitalUploadHistoryTable">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALS SECTION -->
+
+  <!-- 1. Live Hospital Bed & ICU Availability Platform Modal -->
+  <div class="modal-overlay hidden" id="bedPlatformModal">
+    <div class="modal-container modal-xl glass-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <i class="fa-solid fa-hospital-symbol text-purple"></i>
+          <div>
+            <h3>Hospital Bed & ICU Availability Platform</h3>
+            <small>Real-time occupancy and instant reservation matrix</small>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeBedPlatformModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Bed Matrix Filter Controls -->
+        <div class="bed-filters">
+          <div class="filter-group">
+            <i class="fa-solid fa-location-dot"></i>
+            <select id="bedLocFilter" onchange="filterBedMatrix()">
+              <option value="all">All Locations (Hyderabad, Secunderabad)</option>
+              <option value="Banjara Hills">Banjara Hills</option>
+              <option value="Gachibowli">Gachibowli</option>
+              <option value="Jubilee Hills">Jubilee Hills</option>
+              <option value="Secunderabad">Secunderabad</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <i class="fa-solid fa-bed"></i>
+            <select id="bedTypeFilter" onchange="filterBedMatrix()">
+              <option value="all">All Bed Types</option>
+              <option value="ICU">ICU Beds (Ventilator)</option>
+              <option value="Oxygen">Oxygen Supported Beds</option>
+              <option value="Ward">General Wards</option>
+            </select>
+          </div>
+
+          <button class="btn btn-sm btn-purple" onclick="renderBedMatrix()"><i class="fa-solid fa-rotate"></i> Refresh Matrix</button>
+        </div>
+
+        <!-- Bed Matrix Cards Container -->
+        <div class="bed-matrix-grid" id="bedMatrixGrid">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. AI Emergency Decision & Smart Response Modal -->
+  <div class="modal-overlay hidden" id="aiEmergencyModal">
+    <div class="modal-container modal-lg glass-card">
+      <div class="modal-header bg-danger-gradient">
+        <div class="modal-title-group text-white">
+          <i class="fa-solid fa-truck-medical text-pulse"></i>
+          <div>
+            <h3 class="text-white">AI-Based Emergency Decision & Smart Response System</h3>
+            <small class="text-white-70">Instant Triage, Critical Vitals Evaluator & Auto Dispatch</small>
+          </div>
+        </div>
+        <button class="close-btn text-white" onclick="closeAIEmergencyModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form onsubmit="calculateAIEmergencyTriage(event)" id="aiTriageForm">
+          <div class="form-subtitle">Enter Patient Current Vitals or Select Observed Symptoms:</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Systolic BP (mmHg)</label>
+              <input type="number" id="aiSysBP" class="form-control" placeholder="120" value="165" required>
+            </div>
+            <div class="form-group">
+              <label>Diastolic BP (mmHg)</label>
+              <input type="number" id="aiDiaBP" class="form-control" placeholder="80" value="105" required>
+            </div>
+            <div class="form-group">
+              <label>Heart Rate (BPM)</label>
+              <input type="number" id="aiHeartRate" class="form-control" placeholder="75" value="115" required>
+            </div>
+            <div class="form-group">
+              <label>SpO2 Oxygen (%)</label>
+              <input type="number" id="aiSpO2" class="form-control" placeholder="98" value="88" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Observed Severe Symptoms (Select all that apply)</label>
+            <div class="symptom-checkboxes">
+              <label class="chip-checkbox"><input type="checkbox" name="symptom" value="Chest Pain" checked> Severe Chest Pain</label>
+              <label class="chip-checkbox"><input type="checkbox" name="symptom" value="Shortness of Breath" checked> Shortness of Breath</label>
+              <label class="chip-checkbox"><input type="checkbox" name="symptom" value="Dizziness"> Sudden Dizziness</label>
+              <label class="chip-checkbox"><input type="checkbox" name="symptom" value="Loss of Consciousness"> Unconsciousness</label>
+              <label class="chip-checkbox"><input type="checkbox" name="symptom" value="High Fever"> High Fever (>103°F)</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-danger btn-lg btn-full">
+            <i class="fa-solid fa-brain"></i> Compute AI Triage & Trigger Smart Emergency Response
+          </button>
+        </form>
+
+        <!-- AI Result Output Card -->
+        <div id="aiTriageResult" class="ai-triage-output hidden">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Emergency QR Pass Modal -->
+  <div class="modal-overlay hidden" id="emergencyQRModal">
+    <div class="modal-container glass-card text-center">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-qrcode text-purple"></i> Emergency QR Medical Pass</h3>
+        <button class="close-btn" onclick="closeEmergencyQRModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">First responders can scan this QR code for instant access to critical emergency medical information without unlocking the full record.</p>
+
+        <div class="qr-wrapper">
+          <div id="qrcodeCanvas"></div>
+        </div>
+
+        <div class="emergency-summary-box">
+          <div class="emergency-row">
+            <span><i class="fa-solid fa-user text-purple"></i> <strong>Name:</strong> Rahul Sharma</span>
+            <span><i class="fa-solid fa-droplet text-red"></i> <strong>Blood Group:</strong> O+</span>
+          </div>
+          <div class="emergency-row">
+            <span><i class="fa-solid fa-phone text-emerald"></i> <strong>Emergency Contact:</strong> +91 98765 43210</span>
+          </div>
+          <div class="emergency-row">
+            <span><i class="fa-solid fa-notes-medical text-amber"></i> <strong>Chronic Conditions:</strong> Hypertension</span>
+          </div>
+          <div class="emergency-row">
+            <span><i class="fa-solid fa-triangle-exclamation text-red"></i> <strong>Severe Allergies:</strong> Penicillin, Peanuts</span>
+          </div>
+        </div>
+
+        <div class="modal-footer-btns">
+          <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Emergency Card</button>
+          <button class="btn btn-purple" onclick="closeEmergencyQRModal()"><i class="fa-solid fa-check"></i> Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Share Record with Doctor Modal -->
+  <div class="modal-overlay hidden" id="shareRecordModal">
+    <div class="modal-container glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-share-nodes text-purple"></i> Share Health Records with Doctor</h3>
+        <button class="close-btn" onclick="closeShareRecordModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Generate a temporary 6-digit access PIN or scan code to authorize a consulting physician to view your medical history for 24 hours.</p>
+
+        <div class="pin-display-box">
+          <small>Temporary Access PIN (Valid 24 Hours)</small>
+          <div class="pin-code" id="tempAccessPin">749-201</div>
+          <button class="btn btn-sm btn-outline mt-2" onclick="generateNewPin()"><i class="fa-solid fa-rotate"></i> Generate New PIN</button>
+        </div>
+
+        <div class="form-group mt-3">
+          <label>Or Enter Doctor License / Health ID directly:</label>
+          <div class="input-with-btn">
+            <input type="text" id="docDirectId" class="form-control" placeholder="e.g. DOC-ANANYA-84">
+            <button class="btn btn-purple" onclick="grantDirectDoctorAccess()">Grant Access</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Settings Modal -->
+  <div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal-container modal-lg glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-gear text-purple"></i> Account Settings & Privacy Controls</h3>
+        <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="settings-tabs">
+          <button class="tab-btn active" onclick="switchSettingsTab('profileTab')">Edit Profile</button>
+          <button class="tab-btn" onclick="switchSettingsTab('privacyTab')">Privacy & Permissions</button>
+          <button class="tab-btn" onclick="switchSettingsTab('securityTab')">Change Password</button>
+        </div>
+
+        <!-- Edit Profile Tab -->
+        <div id="profileTab" class="settings-pane">
+          <form onsubmit="handleSaveProfile(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="setFullName" class="form-control" value="Rahul Sharma">
+              </div>
+              <div class="form-group">
+                <label>Age</label>
+                <input type="number" id="setAge" class="form-control" value="34">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Blood Group</label>
+                <select id="setBlood" class="form-control">
+                  <option value="O+">O+ Positive</option>
+                  <option value="A+">A+ Positive</option>
+                  <option value="B+">B+ Positive</option>
+                  <option value="AB+">AB+ Positive</option>
+                  <option value="O-">O- Negative</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Emergency Contact Phone</label>
+                <input type="tel" id="setEmergencyPhone" class="form-control" value="+91 98765 43210">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Known Allergies (Comma separated)</label>
+              <input type="text" id="setAllergies" class="form-control" value="Penicillin, Peanuts">
+            </div>
+            <button type="submit" class="btn btn-purple"><i class="fa-solid fa-floppy-disk"></i> Save Profile Changes</button>
+          </form>
+        </div>
+
+        <!-- Privacy & Permissions Tab -->
+        <div id="privacyTab" class="settings-pane hidden">
+          <div class="toggle-setting-row">
+            <div>
+              <strong>Emergency QR Code Public Access</strong>
+              <p>Allow first responders to scan QR pass without phone unlock</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <hr>
+          <div class="toggle-setting-row">
+            <div>
+              <strong>AI Triage Automatic Hospital Dispatch</strong>
+              <p>Automatically share location and vitals with nearest ICU when RED triage is computed</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="securityTab" class="settings-pane hidden">
+          <form onsubmit="handleChangePassword(event)">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" class="form-control" required placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" class="form-control" required placeholder="Minimum 8 characters">
+            </div>
+            <button type="submit" class="btn btn-purple">Update Password</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING MEDIBOT AI CHATBOT -->
+  <div class="medibot-widget">
+    <!-- Chat Window Container -->
+    <div class="medibot-window glass-card hidden" id="medibotWindow">
+      <div class="medibot-header">
+        <div class="bot-info">
+          <div class="bot-icon-circle bg-purple">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h4>MediBot AI Health Assistant</h4>
+            <span class="online-indicator">Online | 24/7 Medical Companion</span>
+          </div>
+        </div>
+        <button class="close-btn" onclick="toggleMediBot()">&times;</button>
+      </div>
+
+      <div class="medibot-body" id="chatMessageContainer">
+        <!-- Rendered messages -->
+        <div class="chat-msg bot-msg">
+          <div class="msg-bubble">
+            👋 Hello! I am <strong>MediBot</strong>, your smart health assistant. How can I help you today? You can ask me to explain your blood test, check symptoms, or guide you through sharing records.
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Suggested Chips -->
+      <div class="chat-suggestions">
+        <button onclick="sendQuickChat('Explain my Blood Pressure readings')">Explain my BP</button>
+        <button onclick="sendQuickChat('How to share my records with Doctor?')">Share Records</button>
+        <button onclick="sendQuickChat('Find available ICU beds in Banjara Hills')">Find ICU Beds</button>
+      </div>
+
+      <div class="medibot-footer">
+        <input type="text" id="chatInput" class="form-control" placeholder="Ask MediBot anything about your health..." onkeypress="handleChatKeyPress(event)">
+        <button class="btn btn-purple" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+
+    <!-- Floating Chat Trigger Button -->
+    <button class="medibot-trigger-btn" onclick="toggleMediBot()" id="medibotTrigger">
+      <i class="fa-solid fa-comment-medical"></i>
+      <span class="trigger-label">Ask MediBot AI</span>
+    </button>
+  </div>
+
+  <!-- JavaScript Application Bundle -->
+  <script src="app.js"></script>
+</body>
+</html>
